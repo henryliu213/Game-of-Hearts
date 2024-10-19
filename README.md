@@ -48,7 +48,7 @@ To show off your game for the peer reviews, you will need to record a video of a
 
 First and Last Name: Henry Liu
 
-Video Play-Through Link: https://youtu.be/wQ8QPyi_E9U
+Video Play-Through Link:  https://youtu.be/8F4PMKUP59s
 
 
 # Model Reference

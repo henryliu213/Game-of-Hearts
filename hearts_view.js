@@ -25,6 +25,10 @@ export class HeartsView {
         render_div.append(board);
         board.append(document.createElement('br'));
         render_div.append(document.createElement('br'));
+        let sources = document.createElement('p');
+        sources.append("Cards open source from: https://code.google.com/archive/p/vector-playing-cards/ \n");
+        sources.append("Sound from: https://mixkit.co/free-sound-effects/click/ ")
+        render_div.append(sources);
 
 
         let inpu = document.createElement('input');
@@ -48,6 +52,7 @@ export class HeartsView {
 
         let gameint = document.createElement("div");
         let textbox = document.createElement("p");
+        let cardsplayed = document.createElement("div");
         board.append(gameint);
         let textbox2 = document.createElement("p");
         gameint.append(textbox);
@@ -57,18 +62,20 @@ export class HeartsView {
         let textbox3 = document.createElement("p");
         gameint.append(textbox3);
         gameint.append(document.createElement("br"));
-        let cardsinhand = document.createElement("div");    
+        let cardsinhand = document.createElement("div");
+        gameint.append(cardsplayed);
+        let bigbr = document.createElement("br");
+        gameint.append(bigbr);
+        cardsplayed.style.height = '120px';
         gameint.append(cardsinhand);
 
         this.#model.addEventListener('stateupdate', () => {
             if (this.#model.getState() == 'passing') {
                 textbox.textContent = ( "Passing: " + this.#model.getPassing() + "\n");
                 if (this.#model.getPassing() != 'none') {
-                    textbox3.textContent = "Click cards to put in: \n";
-                    createhand(this.#model, this.#controller); // TODO
+                    createhand(this.#model, this.#controller);
                 }
-            } else if (this.#model.getState() == 'playing') {       //NOT CHECKED
-                //gameint.append("Passes complete, game starting.\n");
+            } else if (this.#model.getState() == 'playing') {       
                 textbox2.textContent = "Passes complete, game starting.";
             } else if (this.#model.getState() == 'complete') {
                 cardsinhand.remove();
@@ -80,24 +87,38 @@ export class HeartsView {
                         winner = p;
                     }
                 }); 
-                textbox3.remove();
                 textbox2.textContent = "Match over,"+ this.#model.getPlayerName(winner)+ " wins!";
             }
         })
 
         this.#model.addEventListener('trickstart', () => {
-            textbox.textContent = "1: Trick started";
+            textbox.textContent = "Trick started";
+            cardsplayed.prepend("Cards played:");
+            cardsplayed.append(document.createElement("br"));
             if (this.#model.getCurrentTrick().nextToPlay() == 'south') {
-                textbox.textContent = "1: ";
+                textbox.textContent = "";
                 textbox2.textContent = "2: Your're first! ";
-                textbox3.textContent = "3: Click cards to play: \n";
-                createhand(this.#model, this.#controller); // TODO
+                createhand(this.#model, this.#controller); 
             }
         });
 
 
         this.#model.addEventListener('trickplay', (e) => {
-            textbox.textContent = ("1:" + this.#model.getPlayerName(e.detail.position) + " played the " + e.detail.card.toString() + "\n");
+            textbox.append(this.#model.getPlayerName(e.detail.position) + " played the " + e.detail.card.toString() + "\n");
+            textbox.append(document.createElement('br'));            
+            
+            let holder = document.createElement("div");
+            holder.style.float = 'left';
+            holder.style.width = '75px';
+            holder.style.height = '100px';
+            let res = document.createElement("img");
+            res.src = getsrc(e.detail.card);
+            res.alt = "2 of clubs";
+            res.style.height = '100px';
+            res.style.width = '75px';
+            holder.append(res);
+            cardsplayed.append(holder);
+
             if (this.#model.getCurrentTrick().nextToPlay() == 'south') {
                 if (this.#model.getState() == 'playing'){
                     if(this.#model.getCurrentTrick().nextToPlay()!= this.#model.getCurrentTrick().getLead()){
@@ -107,16 +128,16 @@ export class HeartsView {
                 }else{
                     textbox2.textContent = ("2: trick played: ");
                 }
-                textbox3.textContent = ("3: your turn, click cards: ");
-                createhand(this.#model, this.#controller); // TODO
+                createhand(this.#model, this.#controller); 
             }
         });
         this.#model.addEventListener('trickend', (e)=>{
-            textbox.textContent = "1: trick ended";
+            textbox.innerHTML = '';
+            cardsplayed.innerHTML = '';
         }
         );
         this.#model.addEventListener('trickcollected', (e) => {
-            textbox.textContent = ("1: Trick won by " + this.#model.getPlayerName(e.detail.position) + "\n");
+            textbox.textContent = (" Trick won by " + this.#model.getPlayerName(e.detail.position) + "\n");
         });
 
         this.#model.addEventListener('scoreupdate', (e) => {
@@ -165,13 +186,14 @@ export class HeartsView {
         };
 
         function createimg(cardy, model, controller, clickedcards){
+            // Cards were open source and anonymous: https://code.google.com/archive/p/vector-playing-cards/
             let holder = document.createElement("div");
             holder.style.float = 'left';
             holder.style.width = '75px';
             holder.style.height = '100px';
             let res = document.createElement("img");
             res.src = getsrc(cardy);
-            res.alt = "2 of clubs";
+            res.alt = cardy.toString();
             res.style.height = '100px';
             res.style.width = '75px';
             if (model.getState() == "playing"){
@@ -183,10 +205,14 @@ export class HeartsView {
             }   
             holder.append(res);
             res.addEventListener("click", () =>{
+                //sound is also free: https://mixkit.co/free-sound-effects/click/
                 if (model.getState() == 'passing'){
                     if (clickedcards.indexOf(cardy) == -1 && clickedcards.length <= 2){
                         sound.play();
                         clickedcards.push(cardy);
+                        holder.style.border = 'solid';
+                        holder.style.borderColor = "#feb900";
+                        holder.style.borderWidth = '4px';
                     }
                     if (clickedcards.length == 3){
                         controller.passCards('south', clickedcards);
